@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tsunami</title>
+
+  <style>
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: url("heart.jpg") center center / cover no-repeat;
+      height: 100vh;
+      overflow: hidden;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      color: #584738;
+    }
+
+    body.hide-cursor {
+      cursor: none;
+    }
+
+    body.show-cursor {
+      cursor: auto;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+
+      background: rgba(0, 0, 0, 0.9);
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      z-index: 1000;
+    }
+
+    .popup {
+      width: 90%;
+      max-width: 850px;
+
+      background:#f1eada;
+      opacity: 0.95;
+
+      border-radius: 20px;
+
+      padding: 30px;
+
+      box-shadow: 0 0 40px rgba(255,255,255,0.08);
+
+      text-align: center;
+
+      position: relative;
+
+      overflow: hidden;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    audio {
+      display: none;
+    }
+
+    .start-button {
+      padding: 14px 30px;
+
+      border: none;
+      border-radius: 999px;
+
+      background: white;
+      color: black;
+
+      font-size: 1rem;
+
+      cursor: pointer;
+
+      transition: 0.3s ease;
+    }
+
+    .start-button:hover {
+      transform: scale(1.05);
+    }
+
+    /* LOADING DOTS */
+
+    .loading-dots {
+      position: absolute;
+      inset: 0;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      gap: 14px;
+
+      opacity: 0;
+
+      transition:
+        opacity 1.5s ease,
+        transform 1.5s ease;
+    }
+
+    .loading-dots.show {
+      opacity: 1;
+    }
+
+    .loading-dots.hide {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+
+    .loading-dots span {
+      font-size: 4rem;
+
+      opacity: 0.2;
+
+      animation: dotBlink 1.4s infinite;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    /* TITLE */
+
+    .title {
+      position: relative;
+      margin-top: 50px;
+      font-size: 3rem;
+      letter-spacing: 4px;
+      font-weight: 300;
+
+      opacity: 0;
+      visibility: hidden;
+
+      transform: translateY(100px);
+
+      transition:
+        opacity 3s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 3.5s cubic-bezier(0.22, 1, 0.36, 1);
+
+      will-change: transform, opacity;
+    }
+
+    .title.show {
+      opacity: 1;
+
+      /* rises upward from the dots */
+      transform: translateY(-20px);
+    }
+
+    .title.fade-out {
+      opacity: 0;
+      transform: translateY(-60px);
+
+      transition:
+        opacity 2.5s ease,
+        transform 2.5s ease;
+    }
+
+    /* MESSAGE */
+
+    .message-box {
+      margin-top: -40px;
+
+      min-height: 220px;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      opacity: 0;
+      transform: translateY(10px);
+
+      transition:
+        opacity 1.2s ease,
+        transform 1.2s ease;
+    }
+
+    .message-box.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #typedText {
+      width: 100%;
+      max-width: 650px;
+
+      margin: 0 auto;
+
+      text-align: center;
+
+      font-size: 1.15rem;
+      line-height: 1.9;
+
+      white-space: pre-line;
+
+      display: inline-block;
+    }
+
+    .memory-button {
+      position: absolute;
+
+      top: 68%;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      opacity: 0;
+
+      transition:
+        opacity 2.5s ease,
+        transform 2.5s ease;
+
+      z-index: 10;
+    }
+
+    .memory-button.show {
+      opacity: 1;
+
+      transform: translateX(-50%) translateY(-8px);
+    }
+
+    /* ANIMATIONS */
+
+    @keyframes dotBlink {
+
+      0%, 80%, 100% {
+        opacity: 0.2;
+        transform: translateY(0);
+      }
+
+      40% {
+        opacity: 1;
+        transform: translateY(-6px);
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- START SCREEN -->
+
+  <div class="overlay" id="startScreen">
+
+    <button class="start-button" onclick="startExperience()">
+      Click Me! :D
+    </button>
+
+  </div>
+
+  <!-- POPUP -->
+
+  <div class="popup" id="popup" style="display:none;">
+
+    <!-- MUSIC -->
+
+    <audio id="bgMusic">
+      <source src="tsunami.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- LOADING -->
+
+    <div class="loading-dots" id="loadingDots">
+      <span>.</span>
+      <span>.</span>
+      <span>.</span>
+    </div>
+
+    <!-- TITLE -->
+
+    <h1 class="title" id="titleText">
+      Tsunami
+    </h1>
+
+    <!-- MESSAGE -->
+
+    <div class="message-box" id="messageBox">
+      <div id="typedText"></div>
+    </div>
+
+  </div>
+
+  <script>
+
+    const stanzas = [
+
+`Embraced by thousands of calamities,
+I will survive a thousand more.`,
+
+`I drifted through merciless seas—
+through deafening thunder,
+through blinding lightning.`,
+
+`Wave after wave,
+swallowing my body whole.`,
+
+`The chaos it carried
+promised no good tomorrow,
+sinking me into the deepest of truths,
+where I drowned slowly, quietly,
+choosing decay
+among the wreckage of my own becoming.`,
+
+`Beneath the raging tides,
+inside the ruins where I laid to rest,
+I found you.`,
+
+`Or perhaps,
+you were the one who found me first—
+reaching for a body
+that had long forgotten
+what warmth felt like.`,
+
+`You breathed life back into me,
+into lungs that only knew drowning.
+You melted a heart
+the ocean had frozen over.`,
+
+`The thunder that only knew how to roar
+whispered softly.`,
+
+`The lightning that only knew how to blind
+split the heavens open
+to welcome light once more.`,
+
+`And the waves that only knew how to drown
+carried my weary body
+towards you.`,
+
+`Should fate envy my happiness
+and cast me into the deep end,
+I will dive in headfirst.`,
+
+`For I have already survived
+a thousand storms before you,
+and with you,
+I shall survive
+a thousand more.`
+
+    ];
+
+    const typingSpeed = 60;
+    const introDelay = 25000;
+
+    const popup = document.getElementById("popup");
+    const startScreen = document.getElementById("startScreen");
+
+    const messageBox = document.getElementById("messageBox");
+    const typedText = document.getElementById("typedText");
+
+    const loadingDots = document.getElementById("loadingDots");
+
+    const bgMusic = document.getElementById("bgMusic");
+
+    const titleText = document.getElementById("titleText");
+
+    // START EXPERIENCE
+
+    async function startExperience() {
+
+      startScreen.style.display = "none";
+      popup.style.display = "block";
+      
+      document.body.classList.add("hide-cursor");
+      document.body.classList.remove("show-cursor");
+
+      /* ENTER FULLSCREEN */
+
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+
+      try {
+        await bgMusic.play();
+      } catch (error) {
+        console.log(error);
+      }
+
+      loadingDots.classList.add("show");
+
+      setTimeout(() => {
+
+        loadingDots.classList.add("hide");
+
+        setTimeout(() => {
+
+          titleText.style.visibility = "visible";
+
+          requestAnimationFrame(() => {
+            titleText.classList.add("show");
+          });
+
+          setTimeout(() => {
+            loadingDots.style.display = "none";
+          }, 1200);
+
+          setTimeout(() => {
+            showMessage();
+          }, 3800);
+
+        }, 500);
+
+      }, introDelay);
+    }
+
+    // SHOW STANZAS
+    async function showMessage() {
+
+      messageBox.classList.add("show");
+
+      for (const stanza of stanzas) {
+
+        typedText.innerHTML = "";
+
+        messageBox.style.opacity = "1";
+
+        await typeStanza(stanza);
+
+        await delay(4000);
+
+        messageBox.style.opacity = "0";
+
+        await delay(1200);
+      }
+
+      /* FADE OUT TITLE */
+
+      titleText.classList.remove("show");
+      titleText.classList.add("fade-out");
+
+      await delay(2200);
+
+      /* REMOVE POEM + TITLE */
+
+      titleText.style.opacity = "0";
+      messageBox.style.opacity = "0";
+      messageBox.style.visibility = "hidden";
+
+      /* CREATE FINAL MESSAGE */
+
+      const endingMessage = document.createElement("div");
+
+      endingMessage.innerHTML = `
+        Happy Monthsary, my dearest.<br>
+        I love you.
+      `;
+
+      endingMessage.style.position = "absolute";
+      endingMessage.style.top = "50%";
+      endingMessage.style.left = "50%";
+
+      endingMessage.style.transform = "translate(-50%, -50%)";
+
+      endingMessage.style.textAlign = "center";
+
+      endingMessage.style.fontSize = "1.5rem";
+      endingMessage.style.lineHeight = "2";
+
+      endingMessage.style.opacity = "0";
+
+      endingMessage.style.transition = "opacity 3s ease";
+
+      popup.appendChild(endingMessage);
+
+      requestAnimationFrame(() => {
+        endingMessage.style.opacity = "1";
+      });
+
+      /* SHOW BUTTON SMOOTHLY */
+
+      await delay(3500);
+
+      showDownloadButton();
+    }
+    
+    // TYPE EFFECT
+
+    function typeStanza(text) {
+
+      return new Promise(resolve => {
+
+        typedText.innerHTML = "";
+
+        let index = 0;
+
+        function type() {
+
+          if (index < text.length) {
+
+            const char = text.charAt(index);
+
+            if (char === "\n") {
+
+              typedText.innerHTML += "<br>";
+
+            } else {
+
+              const span = document.createElement("span");
+
+              span.textContent = char;
+
+              span.style.opacity = "0";
+              span.style.transition = "opacity 0.25s ease";
+
+              typedText.appendChild(span);
+
+              requestAnimationFrame(() => {
+                span.style.opacity = "1";
+              });
+            }
+
+            index++;
+
+            setTimeout(type, typingSpeed);
+
+          } else {
+
+            resolve();
+          }
+        }
+
+        type();
+      });
+    }
+
+    // MEMORY BUTTON
+
+    function showDownloadButton() {
+
+      const button = document.createElement("button");
+
+      button.innerText = "I love you <3";
+
+      button.className = "start-button memory-button";
+
+      button.onclick = downloadMemory;
+
+      popup.appendChild(button);
+
+      requestAnimationFrame(() => {
+        button.classList.add("show");
+      });
+
+      document.body.classList.remove("hide-cursor");
+      document.body.classList.add("show-cursor");
+    }
+
+    // DOWNLOAD
+
+   async function downloadMemory() {
+
+      const response = await fetch("Tsunami.png");
+
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "Tsunami.png";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
+
+      /* EXIT FULLSCREEN */
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+
+      document.body.style.cursor = "default";
+    }
+
+    // DELAY HELPER
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+  </script>
+
+</body>
+</html>
